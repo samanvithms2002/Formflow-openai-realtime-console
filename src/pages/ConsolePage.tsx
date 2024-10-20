@@ -27,6 +27,8 @@ import { Map } from '../components/Map';
 import './ConsolePage.scss';
 import { isJsxOpeningLikeElement } from 'typescript';
 
+import { asyncCareBackPainData } from '../utils/backPainFormData.js';
+
 /**
  * Type for result from get_weather() function call
  */
@@ -412,47 +414,123 @@ export function ConsolePage() {
         return { ok: true };
       }
     );
+    // client.addTool(
+    //   {
+    //     name: 'get_weather',
+    //     description:
+    //       'Retrieves the weather for a given lat, lng coordinate pair. Specify a label for the location.',
+    //     parameters: {
+    //       type: 'object',
+    //       properties: {
+    //         lat: {
+    //           type: 'number',
+    //           description: 'Latitude',
+    //         },
+    //         lng: {
+    //           type: 'number',
+    //           description: 'Longitude',
+    //         },
+    //         location: {
+    //           type: 'string',
+    //           description: 'Name of the location',
+    //         },
+    //       },
+    //       required: ['lat', 'lng', 'location'],
+    //     },
+    //   },
+    //   async ({ lat, lng, location }: { [key: string]: any }) => {
+    //     setMarker({ lat, lng, location });
+    //     setCoords({ lat, lng, location });
+    //     const result = await fetch(
+    //       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m`
+    //     );
+    //     const json = await result.json();
+    //     const temperature = {
+    //       value: json.current.temperature_2m as number,
+    //       units: json.current_units.temperature_2m as string,
+    //     };
+    //     const wind_speed = {
+    //       value: json.current.wind_speed_10m as number,
+    //       units: json.current_units.wind_speed_10m as string,
+    //     };
+    //     setMarker({ lat, lng, location, temperature, wind_speed });
+    //     return json;
+    //   }
+    // );
+
+    // Add this new tool after the existing tools
+
     client.addTool(
       {
-        name: 'get_weather',
+        name: 'get_next_question',
         description:
-          'Retrieves the weather for a given lat, lng coordinate pair. Specify a label for the location.',
+          'Fetches the next set of questions to ask the user for their medical concerns.',
         parameters: {
           type: 'object',
           properties: {
-            lat: {
-              type: 'number',
-              description: 'Latitude',
-            },
-            lng: {
-              type: 'number',
-              description: 'Longitude',
-            },
-            location: {
+            currentPageId: {
               type: 'string',
-              description: 'Name of the location',
+              description:
+                'The ID of the current page. If not provided, the root page will be used.',
+            },
+            selectedOption: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                text: { type: 'string' },
+                link: { type: 'string' },
+              },
+              description: 'The option selected by the user (if any)',
             },
           },
-          required: ['lat', 'lng', 'location'],
         },
       },
-      async ({ lat, lng, location }: { [key: string]: any }) => {
-        setMarker({ lat, lng, location });
-        setCoords({ lat, lng, location });
-        const result = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m`
-        );
-        const json = await result.json();
-        const temperature = {
-          value: json.current.temperature_2m as number,
-          units: json.current_units.temperature_2m as string,
+      async ({
+        currentPageId,
+        selectedOption,
+      }: {
+        currentPageId?: string;
+        selectedOption?: { id: string; text: string; link?: string };
+      }) => {
+        const jsonData = asyncCareBackPainData as {
+          nameToPageId: { [key: string]: string };
+          pages: {
+            [key: string]: {
+              questions: any[];
+              next_link?: string;
+            };
+          };
         };
-        const wind_speed = {
-          value: json.current.wind_speed_10m as number,
-          units: json.current_units.wind_speed_10m as string,
+
+        let nextPageId = '';
+
+        if (!currentPageId) {
+          nextPageId = "fbea205c-1d58-4e1e-99dd-cf0bfa550f5c";
+        } else if (selectedOption?.link) {
+          nextPageId = jsonData.nameToPageId[selectedOption.link];
+        } else if (jsonData.pages[currentPageId].next_link) {
+          const nextLink = jsonData.pages[currentPageId].next_link;
+          if (nextLink === 'END') {
+            return { tool_response: 'END-OF-FORM-QUESTIONS' };
+          }
+          if (typeof nextLink === 'string') {
+            nextPageId = jsonData.nameToPageId[nextLink];
+          }
+        } else {
+          nextPageId = currentPageId;
+        }
+
+        if (!nextPageId) {
+          return { error: 'No next question found' };
+        }
+
+        const nextPage = jsonData.pages[nextPageId];
+
+        return {
+          pageId: nextPageId,
+          questions: nextPage.questions,
+          // content: nextPage.content,
         };
-        setMarker({ lat, lng, location, temperature, wind_speed });
-        return json;
       }
     );
 
@@ -479,17 +557,18 @@ export function ConsolePage() {
     });
     client.on('conversation.updated', async ({ item, delta }: any) => {
       const items = client.conversation.getItems();
-      if (delta?.audio) {
-        wavStreamPlayer.add16BitPCM(delta.audio, item.id);
-      }
-      if (item.status === 'completed' && item.formatted.audio?.length) {
-        const wavFile = await WavRecorder.decode(
-          item.formatted.audio,
-          24000,
-          24000
-        );
-        item.formatted.file = wavFile;
-      }
+      // UNCOMMENT LATER: Audio processing for voice output
+      // if (delta?.audio) {
+      //   wavStreamPlayer.add16BitPCM(delta.audio, item.id);
+      // }
+      // if (item.status === 'completed' && item.formatted.audio?.length) {
+      //   const wavFile = await WavRecorder.decode(
+      //     item.formatted.audio,
+      //     24000,
+      //     24000
+      //   );
+      //   item.formatted.file = wavFile;
+      // }
       setItems(items);
     });
 
@@ -649,27 +728,32 @@ export function ConsolePage() {
                       {!conversationItem.formatted.tool &&
                         conversationItem.role === 'user' && (
                           <div>
-                            {conversationItem.formatted.transcript ||
+                            {conversationItem.formatted.text || '(item sent)'}
+                            {/* UNCOMMENT LATER: Voice input transcript */}
+                            {/* {conversationItem.formatted.transcript ||
                               (conversationItem.formatted.audio?.length
                                 ? '(awaiting transcript)'
                                 : conversationItem.formatted.text ||
-                                  '(item sent)')}
+                                  '(item sent)')} */}
                           </div>
                         )}
                       {!conversationItem.formatted.tool &&
                         conversationItem.role === 'assistant' && (
                           <div>
-                            {conversationItem.formatted.transcript ||
+                            {conversationItem.formatted.transcript || '(truncated)'}
+                            {/* UNCOMMENT LATER: Voice output transcript */}
+                            {/* {conversationItem.formatted.transcript ||
                               conversationItem.formatted.text ||
-                              '(truncated)'}
+                              '(truncated)'} */}
                           </div>
                         )}
-                      {conversationItem.formatted.file && (
+                      {/* UNCOMMENT LATER: Audio player */}
+                      {/* {conversationItem.formatted.file && (
                         <audio
                           src={conversationItem.formatted.file.url}
                           controls
                         />
-                      )}
+                      )} */}
                     </div>
                   </div>
                 );
