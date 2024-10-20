@@ -12,7 +12,6 @@ const LOCAL_RELAY_SERVER_URL: string =
   process.env.REACT_APP_LOCAL_RELAY_SERVER_URL || '';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
-
 import { RealtimeClient } from '@openai/realtime-api-beta';
 import { ItemType } from '@openai/realtime-api-beta/dist/lib/client.js';
 import { WavRecorder, WavStreamPlayer } from '../lib/wavtools/index.js';
@@ -92,6 +91,7 @@ export function ConsolePage() {
           }
     )
   );
+
 
   /**
    * References for
@@ -259,12 +259,16 @@ export function ConsolePage() {
    */
   const changeTurnEndType = async (value: string) => {
     const client = clientRef.current;
+    client.updateSession({
+      modalities:["text"]
+    })
     const wavRecorder = wavRecorderRef.current;
     if (value === 'none' && wavRecorder.getStatus() === 'recording') {
       await wavRecorder.pause();
     }
     client.updateSession({
       turn_detection: value === 'none' ? null : { type: 'server_vad' },
+      modalities: ["text"]
     });
     if (value === 'server_vad' && client.isConnected()) {
       await wavRecorder.record((data) => client.appendInputAudio(data.mono));
@@ -533,6 +537,100 @@ export function ConsolePage() {
         };
       }
     );
+
+
+ 
+
+
+// Define the path to the JSON file
+
+// Load existing questions from the JSON file
+let storedQuestions :Question[] =[]
+// Add the tool definition
+
+interface Question {
+  question_id: string;
+  question_type: 'exclusive' | 'multiple_choice' | 'numeric_entry' | 'free_text';
+  question_text: string;
+  options?: {
+    selected: string[];
+    not_selected: string[];
+  };
+  numeric_entry?: string;
+  free_text?: string;
+}
+
+client.addTool(
+  {
+    name: 'record_form_question_response',
+    description: 'If the user answers any question, this tool should be used to record the question and answer.',
+    parameters: {
+      type: 'object',
+      properties: {
+        session_id: {
+          type: 'string',
+          description: 'Session ID',
+        },
+        question: {
+          type: 'object',
+          properties: {
+            question_id: {
+              type: 'string',
+              description: 'Unique identifier for the question',
+            },
+            question_type: {
+              type: 'string',
+              description: 'Type of the question (exclusive, multiple_choice, numeric_entry, free_text)',
+            },
+            question_text: {
+              type: 'string',
+              description: 'Text of the question',
+            },
+            options: {
+              type: 'object',
+              properties: {
+                selected: {
+                  type: 'array',
+                  items: {
+                    type: 'string',
+                  },
+                  description: 'Selected options',
+                },
+                not_selected: {
+                  type: 'array',
+                  items: {
+                    type: 'string',
+                  },
+                  description: 'Not selected options',
+                },
+              },
+              description: 'Options for exclusive and multiple_choice questions',
+            },
+            numeric_entry: {
+              type: 'number',
+              description: 'Numeric entry for numeric_entry questions',
+            },
+            free_text: {
+              type: 'string',
+              description: 'Free text entry for free_text questions',
+            },
+          },
+          required: ['question_id', 'question_type', 'question_text'],
+        },
+      },
+      required: ['session_id', 'question'],
+    },
+  },
+  async ({ session_id, question }: { [key: string]: any }) => {
+    // Add the question object to the questions array
+    storedQuestions.push(question);
+
+    // Save the updated questions array back to the JSON file
+   
+    // Return the updated questions array
+    return storedQuestions;
+  }
+);
 
     // handle realtime events from client + server for event logging
     client.on('realtime.event', (realtimeEvent: RealtimeEvent) => {
