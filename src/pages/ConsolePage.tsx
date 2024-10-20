@@ -124,6 +124,7 @@ export function ConsolePage() {
     lng: -122.418137,
   });
   const [marker, setMarker] = useState<Coordinates | null>(null);
+  const [textInput, setTextInput] = useState('');
 
   /**
    * Utility for formatting the timing of logs
@@ -500,6 +501,19 @@ export function ConsolePage() {
     };
   }, []);
 
+  const sendTextMessage = useCallback(() => {
+    if (isConnected && textInput.trim()) {
+      const client = clientRef.current;
+      client.sendUserMessageContent([
+        {
+          type: `input_text`,
+          text: textInput.trim(),
+        },
+      ]);
+      setTextInput('');
+    }
+  }, [isConnected, textInput]);
+
   /**
    * Render the application
    */
@@ -688,6 +702,25 @@ export function ConsolePage() {
               onClick={
                 isConnected ? disconnectConversation : connectConversation
               }
+            />
+          </div>
+          <div className="text-input-container">
+            <input
+              type="text"
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  sendTextMessage();
+                }
+              }}
+              placeholder="Type your message..."
+              disabled={!isConnected}
+            />
+            <Button
+              label="Send"
+              onClick={sendTextMessage}
+              disabled={!isConnected || !textInput.trim()}
             />
           </div>
         </div>

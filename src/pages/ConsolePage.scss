@@ -277,4 +277,34 @@
       }
     }
   }
+
+  .content-actions {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .text-input-container {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+
+    input {
+      flex-grow: 1;
+      margin-right: 10px;
+      padding: 8px 12px; // Adjust padding for better height
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px; // Adjust font size if needed
+      line-height: 1.2; // Helps control height
+      height: 36px; // Set a specific height
+    }
+
+    button {
+      height: 36px; // Match the height of the input
+      padding: 0 16px; // Adjust padding as needed
+      font-size: 14px; // Match font size with input
+      // Add any other button styles you need
+    }
+  }
 }
