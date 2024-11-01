@@ -19,7 +19,14 @@ import { WavRecorder, WavStreamPlayer } from '../lib/wavtools/index.js';
 import { instructions } from '../utils/conversation_config.js';
 import { WavRenderer } from '../utils/wav_renderer';
 
-import { X, Edit, Zap, ArrowUp, ArrowDown } from 'react-feather';
+import {
+  X,
+  Zap,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+} from 'react-feather';
 import { Button } from '../components/button/Button';
 import { Toggle } from '../components/toggle/Toggle';
 import { Map } from '../components/Map';
@@ -28,6 +35,9 @@ import './ConsolePage.scss';
 import { isJsxOpeningLikeElement } from 'typescript';
 
 import { asyncCareBackPainData } from '../utils/backPainFormData.js';
+
+import waveImage from '../assets/wave.svg';
+import Tabs from '../components/tabs/Tabs';
 
 /**
  * Type for result from get_weather() function call
@@ -127,6 +137,7 @@ export function ConsolePage() {
   });
   const [marker, setMarker] = useState<Coordinates | null>(null);
   const [textInput, setTextInput] = useState('');
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   /**
    * Utility for formatting the timing of logs
@@ -152,14 +163,20 @@ export function ConsolePage() {
   /**
    * When you click the API key
    */
-  const resetAPIKey = useCallback(() => {
-    const apiKey = prompt('OpenAI API Key');
-    if (apiKey !== null) {
-      localStorage.clear();
-      localStorage.setItem('tmp::voice_api_key', apiKey);
-      window.location.reload();
-    }
+  useEffect(() => {
+    // Add OpenAI API key in api_key
+    const api_key = '';
+    localStorage.setItem('tmp::voice_api_key', api_key);
   }, []);
+
+  // const resetAPIKey = useCallback(() => {
+  //   const apiKey = prompt('OpenAI API Key');
+  //   if (apiKey !== null) {
+  //     localStorage.clear();
+  //     localStorage.setItem('tmp::voice_api_key', apiKey);
+  //     window.location.reload();
+  //   }
+  // }, []);
 
   /**
    * Connect to conversation:
@@ -306,38 +323,15 @@ export function ConsolePage() {
   useEffect(() => {
     let isLoaded = true;
 
-    const wavRecorder = wavRecorderRef.current;
-    const clientCanvas = clientCanvasRef.current;
-    let clientCtx: CanvasRenderingContext2D | null = null;
-
     const wavStreamPlayer = wavStreamPlayerRef.current;
     const serverCanvas = serverCanvasRef.current;
     let serverCtx: CanvasRenderingContext2D | null = null;
 
+    const image = new Image();
+    image.src = waveImage;
+
     const render = () => {
       if (isLoaded) {
-        if (clientCanvas) {
-          if (!clientCanvas.width || !clientCanvas.height) {
-            clientCanvas.width = clientCanvas.offsetWidth;
-            clientCanvas.height = clientCanvas.offsetHeight;
-          }
-          clientCtx = clientCtx || clientCanvas.getContext('2d');
-          if (clientCtx) {
-            clientCtx.clearRect(0, 0, clientCanvas.width, clientCanvas.height);
-            const result = wavRecorder.recording
-              ? wavRecorder.getFrequencies('voice')
-              : { values: new Float32Array([0]) };
-            WavRenderer.drawBars(
-              clientCanvas,
-              clientCtx,
-              result.values,
-              '#0099ff',
-              10,
-              0,
-              8
-            );
-          }
-        }
         if (serverCanvas) {
           if (!serverCanvas.width || !serverCanvas.height) {
             serverCanvas.width = serverCanvas.offsetWidth;
@@ -349,21 +343,25 @@ export function ConsolePage() {
             const result = wavStreamPlayer.analyser
               ? wavStreamPlayer.getFrequencies('voice')
               : { values: new Float32Array([0]) };
-            WavRenderer.drawBars(
+            WavRenderer.drawConcentricCirclesWithImage(
               serverCanvas,
               serverCtx,
               result.values,
-              '#009900',
-              10,
-              0,
-              8
+              250,
+              image,
+              200,
+              serverCanvas.width / 2,
+              serverCanvas.height / 2,
+              6
             );
           }
         }
         window.requestAnimationFrame(render);
       }
     };
-    render();
+    image.onload = () => {
+      render();
+    };
 
     return () => {
       isLoaded = false;
@@ -505,7 +503,7 @@ export function ConsolePage() {
         let nextPageId = '';
 
         if (!currentPageId) {
-          nextPageId = "fbea205c-1d58-4e1e-99dd-cf0bfa550f5c";
+          nextPageId = 'fbea205c-1d58-4e1e-99dd-cf0bfa550f5c';
         } else if (selectedOption?.link) {
           nextPageId = jsonData.nameToPageId[selectedOption.link];
         } else if (jsonData.pages[currentPageId].next_link) {
@@ -598,167 +596,11 @@ export function ConsolePage() {
    */
   return (
     <div data-component="ConsolePage">
-      <div className="content-top">
-        <div className="content-title">
-          <img src="/openai-logomark.svg" />
-          <span>realtime console</span>
-        </div>
-        <div className="content-api-key">
-          {!LOCAL_RELAY_SERVER_URL && (
-            <Button
-              icon={Edit}
-              iconPosition="end"
-              buttonStyle="flush"
-              label={`api key: ${apiKey.slice(0, 3)}...`}
-              onClick={() => resetAPIKey()}
-            />
-          )}
-        </div>
-      </div>
       <div className="content-main">
         <div className="content-logs">
-          <div className="content-block events">
-            <div className="visualization">
-              <div className="visualization-entry client">
-                <canvas ref={clientCanvasRef} />
-              </div>
-              <div className="visualization-entry server">
-                <canvas ref={serverCanvasRef} />
-              </div>
-            </div>
-            <div className="content-block-title">events</div>
-            <div className="content-block-body" ref={eventsScrollRef}>
-              {!realtimeEvents.length && `awaiting connection...`}
-              {realtimeEvents.map((realtimeEvent, i) => {
-                const count = realtimeEvent.count;
-                const event = { ...realtimeEvent.event };
-                if (event.type === 'input_audio_buffer.append') {
-                  event.audio = `[trimmed: ${event.audio.length} bytes]`;
-                } else if (event.type === 'response.audio.delta') {
-                  event.delta = `[trimmed: ${event.delta.length} bytes]`;
-                }
-                return (
-                  <div className="event" key={event.event_id}>
-                    <div className="event-timestamp">
-                      {formatTime(realtimeEvent.time)}
-                    </div>
-                    <div className="event-details">
-                      <div
-                        className="event-summary"
-                        onClick={() => {
-                          // toggle event details
-                          const id = event.event_id;
-                          const expanded = { ...expandedEvents };
-                          if (expanded[id]) {
-                            delete expanded[id];
-                          } else {
-                            expanded[id] = true;
-                          }
-                          setExpandedEvents(expanded);
-                        }}
-                      >
-                        <div
-                          className={`event-source ${
-                            event.type === 'error'
-                              ? 'error'
-                              : realtimeEvent.source
-                          }`}
-                        >
-                          {realtimeEvent.source === 'client' ? (
-                            <ArrowUp />
-                          ) : (
-                            <ArrowDown />
-                          )}
-                          <span>
-                            {event.type === 'error'
-                              ? 'error!'
-                              : realtimeEvent.source}
-                          </span>
-                        </div>
-                        <div className="event-type">
-                          {event.type}
-                          {count && ` (${count})`}
-                        </div>
-                      </div>
-                      {!!expandedEvents[event.event_id] && (
-                        <div className="event-payload">
-                          {JSON.stringify(event, null, 2)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div className="content-block conversation">
-            <div className="content-block-title">conversation</div>
-            <div className="content-block-body" data-conversation-content>
-              {!items.length && `awaiting connection...`}
-              {items.map((conversationItem, i) => {
-                return (
-                  <div className="conversation-item" key={conversationItem.id}>
-                    <div className={`speaker ${conversationItem.role || ''}`}>
-                      <div>
-                        {(
-                          conversationItem.role || conversationItem.type
-                        ).replaceAll('_', ' ')}
-                      </div>
-                      <div
-                        className="close"
-                        onClick={() =>
-                          deleteConversationItem(conversationItem.id)
-                        }
-                      >
-                        <X />
-                      </div>
-                    </div>
-                    <div className={`speaker-content`}>
-                      {/* tool response */}
-                      {conversationItem.type === 'function_call_output' && (
-                        <div>{conversationItem.formatted.output}</div>
-                      )}
-                      {/* tool call */}
-                      {!!conversationItem.formatted.tool && (
-                        <div>
-                          {conversationItem.formatted.tool.name}(
-                          {conversationItem.formatted.tool.arguments})
-                        </div>
-                      )}
-                      {!conversationItem.formatted.tool &&
-                        conversationItem.role === 'user' && (
-                          <div>
-                            {conversationItem.formatted.text || '(item sent)'}
-                            {/* UNCOMMENT LATER: Voice input transcript */}
-                            {/* {conversationItem.formatted.transcript ||
-                              (conversationItem.formatted.audio?.length
-                                ? '(awaiting transcript)'
-                                : conversationItem.formatted.text ||
-                                  '(item sent)')} */}
-                          </div>
-                        )}
-                      {!conversationItem.formatted.tool &&
-                        conversationItem.role === 'assistant' && (
-                          <div>
-                            {conversationItem.formatted.transcript || '(truncated)'}
-                            {/* UNCOMMENT LATER: Voice output transcript */}
-                            {/* {conversationItem.formatted.transcript ||
-                              conversationItem.formatted.text ||
-                              '(truncated)'} */}
-                          </div>
-                        )}
-                      {/* UNCOMMENT LATER: Audio player */}
-                      {/* {conversationItem.formatted.file && (
-                        <audio
-                          src={conversationItem.formatted.file.url}
-                          controls
-                        />
-                      )} */}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="visualization">
+            <canvas ref={serverCanvasRef} />
+            <div className="gradient blob-1"></div>
           </div>
           <div className="content-actions">
             <Toggle
@@ -788,59 +630,246 @@ export function ConsolePage() {
               }
             />
           </div>
-          <div className="text-input-container">
-            <input
-              type="text"
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  sendTextMessage();
-                }
-              }}
-              placeholder="Type your message..."
-              disabled={!isConnected}
-            />
-            <Button
-              label="Send"
-              onClick={sendTextMessage}
-              disabled={!isConnected || !textInput.trim()}
-            />
-          </div>
+          <button
+            className="collapse-button"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            {isCollapsed ? (
+              <ChevronLeft size={20} />
+            ) : (
+              <ChevronRight size={20} />
+            )}
+          </button>
         </div>
-        <div className="content-right">
-          <div className="content-block map">
-            <div className="content-block-title">get_weather()</div>
-            <div className="content-block-title bottom">
-              {marker?.location || 'not yet retrieved'}
-              {!!marker?.temperature && (
-                <>
-                  <br />
-                  🌡️ {marker.temperature.value} {marker.temperature.units}
-                </>
-              )}
-              {!!marker?.wind_speed && (
-                <>
-                  {' '}
-                  🍃 {marker.wind_speed.value} {marker.wind_speed.units}
-                </>
-              )}
-            </div>
-            <div className="content-block-body full">
-              {coords && (
-                <Map
-                  center={[coords.lat, coords.lng]}
-                  location={coords.location}
-                />
-              )}
-            </div>
-          </div>
-          <div className="content-block kv">
-            <div className="content-block-title">set_memory()</div>
-            <div className="content-block-body content-kv">
-              {JSON.stringify(memoryKv, null, 2)}
-            </div>
-          </div>
+        <div className={`content-right ${isCollapsed ? 'collapsed' : ''}`}>
+          {!isCollapsed && (
+            <>
+              <Tabs
+                tabs={[
+                  {
+                    label: 'Conversations',
+                    children: (
+                      <div className="content-block conversation">
+                        <div
+                          className="content-block-body"
+                          data-conversation-content
+                        >
+                          {!items.length && `awaiting connection...`}
+                          {items.map((conversationItem, i) => {
+                            return (
+                              <div>
+                                {(conversationItem.role === 'user' ||
+                                  conversationItem.role === 'assistant') && (
+                                  <div
+                                    className="conversation-item"
+                                    key={conversationItem.id}
+                                  >
+                                    <div
+                                      className={`speaker ${
+                                        conversationItem.role || ''
+                                      }`}
+                                    >
+                                      <div>
+                                        {(
+                                          conversationItem.role ||
+                                          conversationItem.type
+                                        ).replaceAll('_', ' ')}
+                                      </div>
+                                      <div
+                                        className="close"
+                                        onClick={() =>
+                                          deleteConversationItem(
+                                            conversationItem.id
+                                          )
+                                        }
+                                      >
+                                        <X />
+                                      </div>
+                                    </div>
+                                    <div className={`speaker-content`}>
+                                      {!conversationItem.formatted.tool &&
+                                        conversationItem.role === 'user' && (
+                                          <div>
+                                            {conversationItem.formatted.text ||
+                                              '(item sent)'}
+                                            {/* UNCOMMENT LATER: Voice input transcript */}
+                                            {/* {conversationItem.formatted
+                                              .transcript ||
+                                              (conversationItem.formatted.audio
+                                                ?.length
+                                                ? '(awaiting transcript)'
+                                                : conversationItem.formatted
+                                                    .text || '(item sent)')} */}
+                                          </div>
+                                        )}
+                                      {!conversationItem.formatted.tool &&
+                                        conversationItem.role ===
+                                          'assistant' && (
+                                          <div>
+                                            {conversationItem.formatted
+                                              .transcript || '(truncated)'}
+                                            {/* UNCOMMENT LATER: Voice output transcript */}
+                                            {/* {conversationItem.formatted
+                                              .transcript ||
+                                              conversationItem.formatted.text ||
+                                              '(truncated)'} */}
+                                          </div>
+                                        )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="text-input-container">
+                          <input
+                            type="text"
+                            value={textInput}
+                            onChange={(e) => setTextInput(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                sendTextMessage();
+                              }
+                            }}
+                            placeholder="Type your message..."
+                            disabled={!isConnected}
+                          />
+                          <Button
+                            label="Send"
+                            onClick={sendTextMessage}
+                            disabled={!isConnected || !textInput.trim()}
+                          />
+                        </div>
+                      </div>
+                    ),
+                  },
+                  {
+                    label: 'Events',
+                    children: (
+                      <div className="content-block events">
+                        <div className="content-block">
+                          <div
+                            className="content-block-body"
+                            ref={eventsScrollRef}
+                          >
+                            {!realtimeEvents.length && `awaiting connection...`}
+                            {realtimeEvents.map((realtimeEvent, i) => {
+                              const count = realtimeEvent.count;
+                              const event = { ...realtimeEvent.event };
+                              if (event.type === 'input_audio_buffer.append') {
+                                event.audio = `[trimmed: ${event.audio.length} bytes]`;
+                              } else if (
+                                event.type === 'response.audio.delta'
+                              ) {
+                                event.delta = `[trimmed: ${event.delta.length} bytes]`;
+                              }
+                              return (
+                                <div className="event" key={event.event_id}>
+                                  <div className="event-timestamp">
+                                    {formatTime(realtimeEvent.time)}
+                                  </div>
+                                  <div className="event-details">
+                                    <div
+                                      className="event-summary"
+                                      onClick={() => {
+                                        // toggle event details
+                                        const id = event.event_id;
+                                        const expanded = { ...expandedEvents };
+                                        if (expanded[id]) {
+                                          delete expanded[id];
+                                        } else {
+                                          expanded[id] = true;
+                                        }
+                                        setExpandedEvents(expanded);
+                                      }}
+                                    >
+                                      <div
+                                        className={`event-source ${
+                                          event.type === 'error'
+                                            ? 'error'
+                                            : realtimeEvent.source
+                                        }`}
+                                      >
+                                        {realtimeEvent.source === 'client' ? (
+                                          <ArrowUp />
+                                        ) : (
+                                          <ArrowDown />
+                                        )}
+                                        <span>
+                                          {event.type === 'error'
+                                            ? 'error!'
+                                            : realtimeEvent.source}
+                                        </span>
+                                      </div>
+                                      <div className="event-type">
+                                        {event.type}
+                                        {count && ` (${count})`}
+                                      </div>
+                                    </div>
+                                    {!!expandedEvents[event.event_id] && (
+                                      <div className="event-payload">
+                                        {JSON.stringify(event, null, 2)}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    ),
+                  },
+                  {
+                    label: 'Tools',
+                    children: (
+                      <div className="tools">
+                        <div className="content-block map">
+                          <div className="content-block-title">
+                            get_weather()
+                          </div>
+                          <div className="content-block-title bottom">
+                            {marker?.location || 'not yet retrieved'}
+                            {!!marker?.temperature && (
+                              <>
+                                <br />
+                                🌡️ {marker.temperature.value}{' '}
+                                {marker.temperature.units}
+                              </>
+                            )}
+                            {!!marker?.wind_speed && (
+                              <>
+                                {' '}
+                                🍃 {marker.wind_speed.value}{' '}
+                                {marker.wind_speed.units}
+                              </>
+                            )}
+                          </div>
+                          <div className="content-block-body full">
+                            {coords && (
+                              <Map
+                                center={[coords.lat, coords.lng]}
+                                location={coords.location}
+                              />
+                            )}
+                          </div>
+                        </div>
+                        <div className="content-block kv">
+                          <div className="content-block-title">
+                            set_memory()
+                          </div>
+                          <div className="content-block-body content-kv">
+                            {JSON.stringify(memoryKv, null, 2)}
+                          </div>
+                        </div>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>

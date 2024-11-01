@@ -1,0 +1,28 @@
+.tabs-container {
+  padding-top: 0.875rem;
+  height: 100%;
+}
+
+.tab-headers {
+  display: flex;
+}
+
+.tab-button {
+  padding: 12px 16px;
+  cursor: pointer;
+  background-color: #ececf1;
+  color: #666666;
+  border: none;
+  border-radius: 50px;
+  margin-right: 10px;
+}
+
+.tab-button.active {
+  background-color: #101010;
+  color: white;
+}
+
+.tab-content {
+  padding: 10px;
+  height: 88%;
+}

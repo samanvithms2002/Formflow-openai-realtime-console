@@ -1,12 +1,11 @@
 [data-component='ConsolePage'] {
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'Montserrat', monospace;
   font-weight: 400;
   font-style: normal;
   font-size: 12px;
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   margin: 0px 8px;
   & > div {
     flex-shrink: 0;
@@ -38,12 +37,13 @@
     flex-shrink: 1 !important;
     margin: 0px 16px;
     display: flex;
-    overflow: hidden;
     margin-bottom: 24px;
     .content-block {
       position: relative;
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
       max-height: 100%;
       width: 100%;
       .content-block-title {
@@ -59,25 +59,45 @@
         padding: 8px 0px;
         padding-top: 4px;
         line-height: 1.2em;
-        overflow: auto;
+        overflow-y: auto;
+        max-height: 78vh;
         &.full {
           padding: 0px;
         }
       }
     }
     .content-right {
-      width: 300px;
+      padding: 20px 0px 0px 20px;
+      right: 0;
+      top: 0;
+      width: 425px;
+      height: 100%;
+      background-color: #fff;
+      overflow-y: auto;
+      transition: width 0.3s ease;
+      border-left: 1px solid #ccc;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
       margin-left: 24px;
       gap: 24px;
+    }
+    .content-right.collapsed {
+      width: 0px;
+      border-left: none;
+      margin-left: 0px;
+      padding: 0px;
+    }
+    .tools {
+      display: flex;
+      flex-direction: column;
       & > div {
         border-radius: 16px;
-        flex-grow: 1;
         flex-shrink: 0;
         overflow: hidden;
         position: relative;
+        height: 250px;
+        max-height: 250px;
         .content-block-title {
           position: absolute;
           display: flex;
@@ -101,6 +121,7 @@
         }
       }
       & > div.kv {
+        margin-top: 10px;
         height: 250px;
         max-height: 250px;
         white-space: pre;
@@ -131,17 +152,22 @@
         overflow: hidden;
       }
       .events {
-        border-top: 1px solid #e7e7e7;
+        display: flex;
+        flex-shrink: 0;
+        width: 100%;
+        overflow: hidden;
+        height: 150px;
+        min-height: 0;
+        max-height: 150px;
       }
       .conversation {
         display: flex;
         flex-shrink: 0;
         width: 100%;
         overflow: hidden;
-        height: 200px;
+        height: 150px;
         min-height: 0;
-        max-height: 200px;
-        border-top: 1px solid #e7e7e7;
+        max-height: 150px;
       }
     }
   }
@@ -249,14 +275,19 @@
   }
 
   .visualization {
-    position: absolute;
     display: flex;
-    bottom: 4px;
-    right: 8px;
-    padding: 4px;
-    border-radius: 16px;
+    align-items: center;
+    justify-content: center;
     z-index: 10;
-    gap: 2px;
+    height: 100%;
+    canvas {
+      z-index: 10;
+      display: block;
+      margin: auto;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
     .visualization-entry {
       position: relative;
       display: flex;
@@ -288,23 +319,48 @@
     display: flex;
     width: 100%;
     margin-top: 10px;
+    margin-bottom: 10px;
 
     input {
       flex-grow: 1;
       margin-right: 10px;
-      padding: 8px 12px; // Adjust padding for better height
+      padding: 8px 12px;
       border: 1px solid #ccc;
       border-radius: 4px;
-      font-size: 14px; // Adjust font size if needed
-      line-height: 1.2; // Helps control height
-      height: 36px; // Set a specific height
+      font-size: 14px;
+      line-height: 1.2;
     }
 
     button {
-      height: 36px; // Match the height of the input
-      padding: 0 16px; // Adjust padding as needed
-      font-size: 14px; // Match font size with input
-      // Add any other button styles you need
+      height: 36px;
+      padding: 0 16px;
+      font-size: 14px;
     }
   }
+}
+
+.gradient {
+  position: absolute;
+  width: 25rem;
+  height: 25rem;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.5;
+}
+
+.blob-1 {
+  background-color: #fed7aa;
+}
+
+.collapse-button {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  background-color: #101010;
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  z-index: 100;
 }

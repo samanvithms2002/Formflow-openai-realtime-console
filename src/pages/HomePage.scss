@@ -1,0 +1,142 @@
+* {
+  font-family: 'Montserrat', monospace;
+}
+
+.home-container {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: #ffffff;
+  display: flex;
+}
+
+.home-background {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gradient-blob {
+  position: absolute;
+  width: 60rem;
+  height: 40rem;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.5;
+}
+
+.blob-1 {
+  background-color: #fed7aa;
+}
+
+.home-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.home-section {
+  text-align: center;
+}
+
+.home-text-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-title {
+  font-size: 2.25rem;
+  font-family: serif;
+  color: #111827;
+  font-weight: 500;
+}
+
+.home-description {
+  font-size: 1.125rem;
+  color: #4b5563;
+  padding: 0.625rem 0rem;
+}
+
+.home-buttons {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.25rem;
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primary-button {
+  background-color: #111827;
+  color: white;
+  border: none;
+}
+
+.primary-button:hover {
+  background-color: #1f2937;
+}
+
+.header {
+  position: relative;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 1.5px;
+  background-color: black;
+  width: 0;
+  opacity: 1;
+  animation: underlineGrow 5s ease-in-out infinite;
+}
+
+@keyframes underlineGrow {
+  0% {
+    width: 0;
+    opacity: 1;
+  }
+  80% {
+    width: 100%;
+    opacity: 1;
+  }
+  81% {
+    opacity: 0;
+  }
+  100% {
+    width: 0;
+    opacity: 0;
+  }
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+  .home-title {
+    font-size: 3.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-buttons {
+    flex-direction: column;
+  }
+
+  .button {
+    width: 100%;
+  }
+}

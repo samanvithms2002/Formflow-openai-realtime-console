@@ -64,48 +64,54 @@ const normalizeArray = (
 
 export const WavRenderer = {
   /**
-   * Renders a point-in-time snapshot of an audio sample, usually frequency values
    * @param canvas
    * @param ctx
    * @param data
-   * @param color
-   * @param pointCount number of bars to render
-   * @param barWidth width of bars in px
-   * @param barSpacing spacing between bars in px
-   * @param center vertically center the bars
+   * @param maxRadius
+   * @param image
+   * @param imageSize
+   * @param centerX
+   * @param centerY
+   * @param circleCount
    */
-  drawBars: (
+  drawConcentricCirclesWithImage: (
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
     data: Float32Array,
-    color: string,
-    pointCount: number = 0,
-    barWidth: number = 0,
-    barSpacing: number = 0,
-    center: boolean = false
+    maxRadius: number = 100,
+    image: HTMLImageElement,
+    imageSize: number = 50,
+    centerX: number = canvas.width / 2,
+    centerY: number = canvas.height / 2,
+    circleCount: number = 4
   ) => {
-    pointCount = Math.floor(
-      Math.min(
-        pointCount,
-        (canvas.width - barSpacing) / (Math.max(barWidth, 1) + barSpacing)
-      )
-    );
-    if (!pointCount) {
-      pointCount = Math.floor(
-        (canvas.width - barSpacing) / (Math.max(barWidth, 1) + barSpacing)
+    const chunkSize = Math.floor(data.length / circleCount);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const imgX = centerX - imageSize / 2;
+    const imgY = centerY - imageSize / 2;
+    const padding = 20;
+
+    canvas.width = 2 * maxRadius + padding;
+    canvas.height = 2 * maxRadius + padding;
+
+    for (let i = 0; i < circleCount; i++) {
+      const chunkData = data.slice(i * chunkSize, (i + 1) * chunkSize);
+
+      const amplitude = Math.max(...chunkData.map(Math.abs));
+
+      const radius = Math.max(
+        imageSize / 2,
+        amplitude * (maxRadius / circleCount) * (i + 1)
       );
-    }
-    if (!barWidth) {
-      barWidth = (canvas.width - barSpacing) / pointCount - barSpacing;
-    }
-    const points = normalizeArray(data, pointCount, true);
-    for (let i = 0; i < pointCount; i++) {
-      const amplitude = Math.abs(points[i]);
-      const height = Math.max(1, amplitude * canvas.height);
-      const x = barSpacing + i * (barWidth + barSpacing);
-      const y = center ? (canvas.height - height) / 2 : canvas.height - height;
-      ctx.fillStyle = color;
-      ctx.fillRect(x, y, barWidth, height);
+
+      ctx.fillStyle = `rgba(255, 217, 172, ${(0.6 / circleCount) * (i + 1)})`;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.drawImage(image, imgX, imgY, imageSize, imageSize);
     }
   },
 };
