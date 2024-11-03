@@ -27,8 +27,7 @@ import { Map } from '../components/Map';
 import './ConsolePage.scss';
 import { isJsxOpeningLikeElement } from 'typescript';
 
-import { asyncCareBackPainData } from '../utils/backPainFormData.js';
-
+import getNextQuestionRecordResp from './RecordResponse.js';
 /**
  * Type for result from get_weather() function call
  */
@@ -380,40 +379,41 @@ export function ConsolePage() {
     const client = clientRef.current;
 
     // Set instructions
-    client.updateSession({ instructions: instructions });
+    client.updateSession({ instructions: instructions, modalities:['text']});
+
     // Set transcription, otherwise we don't get user transcriptions back
     client.updateSession({ input_audio_transcription: { model: 'whisper-1' } });
 
     // Add tools
-    client.addTool(
-      {
-        name: 'set_memory',
-        description: 'Saves important data about the user into memory.',
-        parameters: {
-          type: 'object',
-          properties: {
-            key: {
-              type: 'string',
-              description:
-                'The key of the memory value. Always use lowercase and underscores, no other characters.',
-            },
-            value: {
-              type: 'string',
-              description: 'Value can be anything represented as a string',
-            },
-          },
-          required: ['key', 'value'],
-        },
-      },
-      async ({ key, value }: { [key: string]: any }) => {
-        setMemoryKv((memoryKv) => {
-          const newKv = { ...memoryKv };
-          newKv[key] = value;
-          return newKv;
-        });
-        return { ok: true };
-      }
-    );
+    // client.addTool(
+    //   {
+    //     name: 'set_memory',
+    //     description: 'Saves important data about the user into memory.',
+    //     parameters: {
+    //       type: 'object',
+    //       properties: {
+    //         key: {
+    //           type: 'string',
+    //           description:
+    //             'The key of the memory value. Always use lowercase and underscores, no other characters.',
+    //         },
+    //         value: {
+    //           type: 'string',
+    //           description: 'Value can be anything represented as a string',
+    //         },
+    //       },
+    //       required: ['key', 'value'],
+    //     },
+    //   },
+    //   async ({ key, value }: { [key: string]: any }) => {
+    //     setMemoryKv((memoryKv) => {
+    //       const newKv = { ...memoryKv };
+    //       newKv[key] = value;
+    //       return newKv;
+    //     });
+    //     return { ok: true };
+    //   }
+    // );
     // client.addTool(
     //   {
     //     name: 'get_weather',
@@ -461,79 +461,45 @@ export function ConsolePage() {
     // Add this new tool after the existing tools
 
     client.addTool(
-      {
-        name: 'get_next_question',
-        description:
-          'Fetches the next set of questions to ask the user for their medical concerns.',
-        parameters: {
-          type: 'object',
-          properties: {
-            currentPageId: {
-              type: 'string',
-              description:
-                'The ID of the current page. If not provided, the root page will be used.',
-            },
-            selectedOption: {
-              type: 'object',
+        {
+          name: "get_next_question_record_resp",
+          description: `Role: This function records the user's response every time the user answers any question posed by the assistant.
+      Instructions: When the user provides a response or selects an option, call this function to:
+      - Record the user's input, including the question text and type.
+      Parameters:
+      - currentPage (string, optional): The name of the current page; pass null if not available.
+      - selectedOption (object, optional): The selected option by the user; may include a link.
+      - questionText (string, optional): The text of the recorded question.
+      - questionType (string, optional): The type of the question.
+      - NotSelectedOption (list, optional): Options that were not selected by the user.
+      Example: response = get_next_question_record_resp(currentPageId="page1", selectedOption={"link": "page2"}, questionText="What is your pain level?", questionType="scale", NotSelectedOption=["No pain", "Minor pain"])`,
+          parameters: {
+              type: "object",
               properties: {
-                id: { type: 'string' },
-                text: { type: 'string' },
-                link: { type: 'string' },
+                  currentPage: {type: "string", description: "The name of the current page; pass null if not available or if pageid is repeated."},
+                  selectedOption: {
+                      type: "object",
+                      description: "The option selected by the user; pass null if not available.",
+                      properties: {
+                          text: {type: "string", description: "Selected option text; pass null if not available."},
+                          link: {type: "string", description: "Link associated with the selected option; pass null if not available."}
+                      }
+                  },
+                  questionText: {type: "string", description: "The text of the question being recorded."},
+                  questionType: {type: "string", description: "The type of the question."},
+                  NotSelectedOption: {
+                      type: "array",
+                      items: {type: "string"},
+                      description: "Options that were not selected by the user."
+                  }
               },
-              description: 'The option selected by the user (if any)',
-            },
-          },
-        },
+              required: []
+          }    
       },
-      async ({
-        currentPageId,
-        selectedOption,
-      }: {
-        currentPageId?: string;
-        selectedOption?: { id: string; text: string; link?: string };
-      }) => {
-        const jsonData = asyncCareBackPainData as {
-          nameToPageId: { [key: string]: string };
-          pages: {
-            [key: string]: {
-              questions: any[];
-              next_link?: string;
-            };
-          };
-        };
-
-        let nextPageId = '';
-
-        if (!currentPageId) {
-          nextPageId = "fbea205c-1d58-4e1e-99dd-cf0bfa550f5c";
-        } else if (selectedOption?.link) {
-          nextPageId = jsonData.nameToPageId[selectedOption.link];
-        } else if (jsonData.pages[currentPageId].next_link) {
-          const nextLink = jsonData.pages[currentPageId].next_link;
-          if (nextLink === 'END') {
-            return { tool_response: 'END-OF-FORM-QUESTIONS' };
-          }
-          if (typeof nextLink === 'string') {
-            nextPageId = jsonData.nameToPageId[nextLink];
-          }
-        } else {
-          nextPageId = currentPageId;
-        }
-
-        if (!nextPageId) {
-          return { error: 'No next question found' };
-        }
-
-        const nextPage = jsonData.pages[nextPageId];
-
-        return {
-          pageId: nextPageId,
-          questions: nextPage.questions,
-          // content: nextPage.content,
-        };
-      }
+    getNextQuestionRecordResp 
     );
 
+    client.updateSession({tool_choice: {"type": "function", "name": "get_next_question_record_resp"}})
     // handle realtime events from client + server for event logging
     client.on('realtime.event', (realtimeEvent: RealtimeEvent) => {
       setRealtimeEvents((realtimeEvents) => {
