@@ -1,0 +1,240 @@
+[
+    {
+        "page_name": "Root Page",
+        "questions": [
+            {
+                "question_text": "Where is the location of your pain?",
+                "question_type": "exclusive",
+                "options": [
+                    {
+                        "option_name": "Leg",
+                        "next_link": "Specific Location - Leg"
+                    },
+                    {
+                        "option_name": "Other",
+                        "next_link": "Specific Location - Upper"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Specific Location - Leg",
+        "questions": [
+            {
+                "question_text": "Where exactly is the location of your back pain in the leg?",
+                "question_type": "multiple_choice",
+                "options": [
+                    {
+                        "option_name": "Down right leg",
+                        "next_link": "Pertinent History"
+                    },
+                    {
+                        "option_name": "Down left leg",
+                        "next_link": "Pertinent History"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Specific Location - Upper",
+        "questions": [
+            {
+                "question_text": "Where exactly is the location of your back pain on the upper part?",
+                "question_type": "multiple_choice",
+                "options": [
+                    {
+                        "option_name": "Right",
+                        "next_link": "Pertinent History"
+                    },
+                    {
+                        "option_name": "Left",
+                        "next_link": "Pertinent History"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Pertinent History",
+        "questions": [
+            {
+                "question_text": "What is the severity of your back pain?",
+                "question_type": "exclusive",
+                "options": [
+                    {
+                        "option_name": "Severe",
+                        "next_link": "Emergent Care"
+                    },
+                    {
+                        "option_name": "Mild",
+                        "next_link": "Pertinent Negative"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Pertinent Negative",
+        "questions": [
+            {
+                "question_text": "Do you have any of the following conditions?",
+                "question_type": "multiple_choice",
+                "options": [
+                    {
+                        "option_name": "Yes",
+                        "next_link": "Past Medical History"
+                    },
+                    {
+                        "option_name": "No",
+                        "next_link": "Past Medical History"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Past Medical History",
+        "questions": [
+            {
+                "question_text": "Do you have any medical problems?",
+                "question_type": "multiple_choice",
+                "options": [
+                    {
+                        "option_name": "Yes",
+                        "next_link": "Past Surgical History"
+                    },
+                    {
+                        "option_name": "No",
+                        "next_link": "Past Surgical History"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Past Surgical History",
+        "questions": [
+            {
+                "question_text": "Have you had any surgeries?",
+                "question_type": "multiple_choice",
+                "options": [
+                    {
+                        "option_name": "Yes",
+                        "next_link": "Medications"
+                    },
+                    {
+                        "option_name": "No",
+                        "next_link": "Medications"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Medications",
+        "questions": [
+            {
+                "question_text": "Are you on any medications?",
+                "question_type": "multiple_choice",
+                "options": [
+                    {
+                        "option_name": "Yes",
+                        "next_link": "Allergies"
+                    },
+                    {
+                        "option_name": "No",
+                        "next_link": "Allergies"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Allergies",
+        "questions": [
+            {
+                "question_text": "Do you have any medication allergies?",
+                "question_type": "multiple_choice",
+                "options": [
+                    {
+                        "option_name": "Yes",
+                        "next_link": "Social History"
+                    },
+                    {
+                        "option_name": "No",
+                        "next_link": "Social History"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Social History",
+        "questions": [
+            {
+                "question_text": "Do you use any of these substances?",
+                "question_type": "multiple_choice",
+                "options": [
+                    {
+                        "option_name": "Yes",
+                        "next_link": "Vital Signs"
+                    },
+                    {
+                        "option_name": "No",
+                        "next_link": "Vital Signs"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Vital Signs",
+        "questions": [
+            {
+                "question_text": "Are your vital signs normal?",
+                "question_type": "exclusive",
+                "options": [
+                    {
+                        "option_name": "Yes",
+                        "next_link": "Physical Exam"
+                    },
+                    {
+                        "option_name": "No",
+                        "next_link": "Physical Exam"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Physical Exam",
+        "questions": [
+            {
+                "question_text": "Do you have any visible symptoms?",
+                "question_type": "exclusive",
+                "options": [
+                    {
+                        "option_name": "Yes",
+                        "next_link": "Other Issues"
+                    },
+                    {
+                        "option_name": "No",
+                        "next_link": "Other Issues"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "page_name": "Other Issues",
+        "questions": [
+            {
+                "question_text": "Do you have any other concerns?",
+                "question_type": "free_text",
+                "options": []
+            }
+        ]
+    }
+]

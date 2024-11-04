@@ -29,31 +29,22 @@ import {
 } from 'react-feather';
 import { Button } from '../components/button/Button';
 import { Toggle } from '../components/toggle/Toggle';
-import { Map } from '../components/Map';
 
 import './ConsolePage.scss';
 import { isJsxOpeningLikeElement } from 'typescript';
 
-import { asyncCareBackPainData } from '../utils/backPainFormData.js';
-
 import waveImage from '../assets/wave.svg';
 import Tabs from '../components/tabs/Tabs';
+import { get_next_question_record_resp } from '../utils/RecordResponse.js';
+import { useVisibility } from '../context/VisibilityContext';
 
 /**
  * Type for result from get_weather() function call
  */
-interface Coordinates {
-  lat: number;
-  lng: number;
-  location?: string;
-  temperature?: {
-    value: number;
-    units: string;
-  };
-  wind_speed?: {
-    value: number;
-    units: string;
-  };
+interface ToolParams {
+  toolName?: string;
+  toolArgument?: string;
+  toolOutput?: string;
 }
 
 /**
@@ -67,18 +58,19 @@ interface RealtimeEvent {
 }
 
 export function ConsolePage() {
+  const { api_Key } = useVisibility();
   /**
    * Ask user for API Key
    * If we're using the local relay server, we don't need this
    */
-  const apiKey = LOCAL_RELAY_SERVER_URL
-    ? ''
-    : localStorage.getItem('tmp::voice_api_key') ||
-      prompt('OpenAI API Key') ||
-      '';
-  if (apiKey !== '') {
-    localStorage.setItem('tmp::voice_api_key', apiKey);
-  }
+  // const apiKey = LOCAL_RELAY_SERVER_URL
+  //   ? ''
+  //   : localStorage.getItem('tmp::voice_api_key') ||
+  //     prompt('OpenAI API Key') ||
+  //     '';
+  // if (apiKey !== '') {
+  //   localStorage.setItem('tmp::voice_api_key', apiKey);
+  // }
 
   /**
    * Instantiate:
@@ -97,7 +89,7 @@ export function ConsolePage() {
       LOCAL_RELAY_SERVER_URL
         ? { url: LOCAL_RELAY_SERVER_URL }
         : {
-            apiKey: apiKey,
+            apiKey: api_Key,
             dangerouslyAllowAPIKeyInBrowser: true,
           }
     )
@@ -109,7 +101,6 @@ export function ConsolePage() {
    * - Autoscrolling event logs
    * - Timing delta for event log displays
    */
-  const clientCanvasRef = useRef<HTMLCanvasElement>(null);
   const serverCanvasRef = useRef<HTMLCanvasElement>(null);
   const eventsScrollHeightRef = useRef(0);
   const eventsScrollRef = useRef<HTMLDivElement>(null);
@@ -130,12 +121,7 @@ export function ConsolePage() {
   const [isConnected, setIsConnected] = useState(false);
   const [canPushToTalk, setCanPushToTalk] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
-  const [memoryKv, setMemoryKv] = useState<{ [key: string]: any }>({});
-  const [coords, setCoords] = useState<Coordinates | null>({
-    lat: 37.775593,
-    lng: -122.418137,
-  });
-  const [marker, setMarker] = useState<Coordinates | null>(null);
+  const [marker, setMarker] = useState<ToolParams | null>(null);
   const [textInput, setTextInput] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -164,10 +150,29 @@ export function ConsolePage() {
    * When you click the API key
    */
   useEffect(() => {
-    // Add OpenAI API key in api_key
-    const api_key = '';
-    localStorage.setItem('tmp::voice_api_key', api_key);
+    localStorage.setItem('tmp::voice_api_key', api_Key);
   }, []);
+
+  useEffect(() => {
+    items.filter((conversationItem) => {
+      const isFunctionCallOutput =
+        conversationItem.type === 'function_call_output';
+      const hasTool = !!conversationItem.formatted.tool;
+
+      if (isFunctionCallOutput) {
+        setMarker({
+          toolOutput: conversationItem?.formatted?.output,
+        });
+      }
+
+      if (hasTool) {
+        setMarker({
+          toolName: conversationItem?.formatted?.tool?.name,
+          toolArgument: conversationItem?.formatted?.tool?.arguments,
+        });
+      }
+    });
+  }, [items]);
 
   // const resetAPIKey = useCallback(() => {
   //   const apiKey = prompt('OpenAI API Key');
@@ -221,11 +226,6 @@ export function ConsolePage() {
     setIsConnected(false);
     setRealtimeEvents([]);
     setItems([]);
-    setMemoryKv({});
-    setCoords({
-      lat: 37.775593,
-      lng: -122.418137,
-    });
     setMarker(null);
 
     const client = clientRef.current;
@@ -382,154 +382,63 @@ export function ConsolePage() {
     // Set transcription, otherwise we don't get user transcriptions back
     client.updateSession({ input_audio_transcription: { model: 'whisper-1' } });
 
-    // Add tools
     client.addTool(
       {
-        name: 'set_memory',
-        description: 'Saves important data about the user into memory.',
+        name: 'get_next_question_record_resp',
+        description: `Role: This function records the user's response every time the user answers any question posed by the assistant.
+    Instructions: When the user provides a response or selects an option, call this function to:
+    - Record the user's input, including the question text and type.
+    Parameters:
+    - currentPage (string, optional): The name of the current page; pass null if not available.
+    - selectedOption (object, optional): The selected option by the user; may include a link.
+    - questionText (string, optional): The text of the recorded question.
+    - questionType (string, optional): The type of the question.
+    - NotSelectedOption (list, optional): Options that were not selected by the user.
+    Example: response = get_next_question_record_resp(currentPageId="page1", selectedOption={"link": "page2"}, questionText="What is your pain level?", questionType="scale", NotSelectedOption=["No pain", "Minor pain"])`,
         parameters: {
           type: 'object',
           properties: {
-            key: {
+            currentPage: {
               type: 'string',
               description:
-                'The key of the memory value. Always use lowercase and underscores, no other characters.',
-            },
-            value: {
-              type: 'string',
-              description: 'Value can be anything represented as a string',
-            },
-          },
-          required: ['key', 'value'],
-        },
-      },
-      async ({ key, value }: { [key: string]: any }) => {
-        setMemoryKv((memoryKv) => {
-          const newKv = { ...memoryKv };
-          newKv[key] = value;
-          return newKv;
-        });
-        return { ok: true };
-      }
-    );
-    // client.addTool(
-    //   {
-    //     name: 'get_weather',
-    //     description:
-    //       'Retrieves the weather for a given lat, lng coordinate pair. Specify a label for the location.',
-    //     parameters: {
-    //       type: 'object',
-    //       properties: {
-    //         lat: {
-    //           type: 'number',
-    //           description: 'Latitude',
-    //         },
-    //         lng: {
-    //           type: 'number',
-    //           description: 'Longitude',
-    //         },
-    //         location: {
-    //           type: 'string',
-    //           description: 'Name of the location',
-    //         },
-    //       },
-    //       required: ['lat', 'lng', 'location'],
-    //     },
-    //   },
-    //   async ({ lat, lng, location }: { [key: string]: any }) => {
-    //     setMarker({ lat, lng, location });
-    //     setCoords({ lat, lng, location });
-    //     const result = await fetch(
-    //       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m`
-    //     );
-    //     const json = await result.json();
-    //     const temperature = {
-    //       value: json.current.temperature_2m as number,
-    //       units: json.current_units.temperature_2m as string,
-    //     };
-    //     const wind_speed = {
-    //       value: json.current.wind_speed_10m as number,
-    //       units: json.current_units.wind_speed_10m as string,
-    //     };
-    //     setMarker({ lat, lng, location, temperature, wind_speed });
-    //     return json;
-    //   }
-    // );
-
-    // Add this new tool after the existing tools
-
-    client.addTool(
-      {
-        name: 'get_next_question',
-        description:
-          'Fetches the next set of questions to ask the user for their medical concerns.',
-        parameters: {
-          type: 'object',
-          properties: {
-            currentPageId: {
-              type: 'string',
-              description:
-                'The ID of the current page. If not provided, the root page will be used.',
+                'The name of the current page; pass null if not available or if pageid is repeated.',
             },
             selectedOption: {
               type: 'object',
+              description:
+                'The option selected by the user; pass null if not available.',
               properties: {
-                id: { type: 'string' },
-                text: { type: 'string' },
-                link: { type: 'string' },
+                text: {
+                  type: 'string',
+                  description:
+                    'Selected option text; pass null if not available.',
+                },
+                link: {
+                  type: 'string',
+                  description:
+                    'Link associated with the selected option; pass null if not available.',
+                },
               },
-              description: 'The option selected by the user (if any)',
+            },
+            questionText: {
+              type: 'string',
+              description: 'The text of the question being recorded.',
+            },
+            questionType: {
+              type: 'string',
+              description: 'The type of the question.',
+            },
+            NotSelectedOption: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Options that were not selected by the user.',
             },
           },
+          required: [],
         },
       },
-      async ({
-        currentPageId,
-        selectedOption,
-      }: {
-        currentPageId?: string;
-        selectedOption?: { id: string; text: string; link?: string };
-      }) => {
-        const jsonData = asyncCareBackPainData as {
-          nameToPageId: { [key: string]: string };
-          pages: {
-            [key: string]: {
-              questions: any[];
-              next_link?: string;
-            };
-          };
-        };
 
-        let nextPageId = '';
-
-        if (!currentPageId) {
-          nextPageId = 'fbea205c-1d58-4e1e-99dd-cf0bfa550f5c';
-        } else if (selectedOption?.link) {
-          nextPageId = jsonData.nameToPageId[selectedOption.link];
-        } else if (jsonData.pages[currentPageId].next_link) {
-          const nextLink = jsonData.pages[currentPageId].next_link;
-          if (nextLink === 'END') {
-            return { tool_response: 'END-OF-FORM-QUESTIONS' };
-          }
-          if (typeof nextLink === 'string') {
-            nextPageId = jsonData.nameToPageId[nextLink];
-          }
-        } else {
-          nextPageId = currentPageId;
-        }
-
-        if (!nextPageId) {
-          return { error: 'No next question found' };
-        }
-
-        const nextPage = jsonData.pages[nextPageId];
-
-        return {
-          pageId: nextPageId,
-          questions: nextPage.questions,
-          // content: nextPage.content,
-        };
-      }
+      get_next_question_record_resp
     );
 
     // handle realtime events from client + server for event logging
@@ -657,7 +566,7 @@ export function ConsolePage() {
                           {!items.length && `awaiting connection...`}
                           {items.map((conversationItem, i) => {
                             return (
-                              <div>
+                              <div key={i}>
                                 {(conversationItem.role === 'user' ||
                                   conversationItem.role === 'assistant') && (
                                   <div
@@ -707,7 +616,9 @@ export function ConsolePage() {
                                           'assistant' && (
                                           <div>
                                             {conversationItem.formatted
-                                              .transcript || '(truncated)'}
+                                              .transcript ||
+                                              conversationItem.formatted.text ||
+                                              '(truncated)'}
                                             {/* UNCOMMENT LATER: Voice output transcript */}
                                             {/* {conversationItem.formatted
                                               .transcript ||
@@ -825,42 +736,24 @@ export function ConsolePage() {
                     label: 'Tools',
                     children: (
                       <div className="tools">
-                        <div className="content-block map">
-                          <div className="content-block-title">
-                            get_weather()
-                          </div>
-                          <div className="content-block-title bottom">
-                            {marker?.location || 'not yet retrieved'}
-                            {!!marker?.temperature && (
-                              <>
-                                <br />
-                                🌡️ {marker.temperature.value}{' '}
-                                {marker.temperature.units}
-                              </>
-                            )}
-                            {!!marker?.wind_speed && (
-                              <>
-                                {' '}
-                                🍃 {marker.wind_speed.value}{' '}
-                                {marker.wind_speed.units}
-                              </>
-                            )}
-                          </div>
-                          <div className="content-block-body full">
-                            {coords && (
-                              <Map
-                                center={[coords.lat, coords.lng]}
-                                location={coords.location}
-                              />
-                            )}
-                          </div>
-                        </div>
                         <div className="content-block kv">
                           <div className="content-block-title">
-                            set_memory()
+                            get_tool_output()
                           </div>
-                          <div className="content-block-body content-kv">
-                            {JSON.stringify(memoryKv, null, 2)}
+                          <div className="content-block-title bottom">
+                            {marker?.toolOutput || 'not yet retrieved'}
+                            {marker?.toolName && (
+                              <>
+                                <br />
+                                {marker.toolName}
+                              </>
+                            )}
+                            {marker?.toolArgument && (
+                              <>
+                                <br />
+                                {marker.toolArgument}
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

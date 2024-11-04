@@ -15,10 +15,10 @@ const HomePage: React.FC = () => {
         <section className="home-section">
           <div className="home-text-container">
             <span className="home-title">Welcome to <span className='home-title header'>FormFlow</span></span>
-            <span className="home-description">Lorem Ipsum Dolor Sit Amet</span>
+            <span className="home-description">Elevating Patient Care with Real-Time Conversational AI</span>
             <div className="home-buttons">
               <button onClick={handleStart} className="button primary-button">
-                Start Survey
+                Get Started
               </button>
             </div>
           </div>
