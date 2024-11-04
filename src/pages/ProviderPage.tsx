@@ -7,10 +7,11 @@ import './ProviderPage.scss';
 const ProviderPage: React.FC = () => {
   const { api_Key } = useVisibility();
   const [activeTab, setActiveTab] = useState(0);
-  const [patientSummary, setPatientSummary] = useState('');
+  const [patientSummary, setPatientSummary] = useState<string[]>([]);
   const [patientResponse, setPatientResponse] = useState<any[] | null>(null);
 
   const fetchPatientSummaryData = async () => {
+    const response = localStorage.getItem('responseData');
     try {
       const openai = new OpenAI({
         apiKey: api_Key,
@@ -18,24 +19,32 @@ const ProviderPage: React.FC = () => {
       });
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
-        messages: [{ role: 'user', content: 'write a haiku about ai' }],
+        messages: [
+          {
+            role: 'user',
+            content:
+              "You are a summarizing bot for medical providers. You'll receive input in the form of JSON where each item will contain a question and the selected option. Summarize it by making a bulleted list of the question and its chosen option by the patient. Rephrase the question with the option such that it is from third person patient perspective.Keep it elaborate" +
+              JSON.stringify(response),
+          },
+        ],
       });
 
-      return completion.choices[0].message.content;
+      const summaryText = completion.choices[0].message.content;
+      const points = summaryText
+        ?.split('\n')
+        .filter((point) => point.trim() !== '');
+
+      setPatientSummary(points!);
     } catch (error) {
       console.error('Error fetching Patient Summary:', error);
     }
   };
 
   useEffect(() => {
-    const getPatientSummary = async () => {
-      if (activeTab === 0) {
-        const resp = await fetchPatientSummaryData();
-        setPatientSummary(resp!);
-      }
-    };
-    getPatientSummary();
-  }, [activeTab]);
+    // if (activeTab === 0) {
+      fetchPatientSummaryData();
+    // }
+  }, []);
 
   useEffect(() => {
     // if (activeTab === 1) {
@@ -56,7 +65,15 @@ const ProviderPage: React.FC = () => {
           tabs={[
             {
               label: 'Patient Summary',
-              children: <div>{patientSummary}</div>,
+              children: (
+                <>
+                  {patientSummary.map((point, index) => (
+                    <div key={index}>
+                      {point} <br />
+                    </div>
+                  ))}
+                </>
+              ),
             },
             {
               label: 'Patient Response',
