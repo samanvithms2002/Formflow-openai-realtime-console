@@ -1,4 +1,4 @@
-import React, { ReactNode, useContext, useState } from 'react';
+import React, { ReactNode, useContext, useState, useEffect } from 'react';
 
 interface VisibilityContextType {
   showConsolePage: boolean;
@@ -20,7 +20,19 @@ const VisibilityProvider: React.FC<VisibilityProviderProps> = ({
   children,
 }) => {
   const [showConsolePage, setShowConsolePage] = useState(false);
-  const [api_Key] = useState('');
+  const [api_Key, setApiKey] = useState<string>('');
+
+  useEffect(() => {
+    let storedApiKey = localStorage.getItem('tmp::voice_api_key');
+
+    if (!storedApiKey) {
+      storedApiKey = prompt('OpenAI API Key:') || '';
+      if (storedApiKey) {
+        localStorage.setItem('tmp::voice_api_key', storedApiKey);
+      }
+    }
+    setApiKey(storedApiKey || '');
+  }, []);
 
   const handleStart = () => {
     setShowConsolePage(true);

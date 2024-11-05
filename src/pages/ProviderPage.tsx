@@ -42,9 +42,11 @@ const ProviderPage: React.FC = () => {
 
   useEffect(() => {
     // if (activeTab === 0) {
+    if (api_Key) {
       fetchPatientSummaryData();
+    }
     // }
-  }, []);
+  }, [api_Key]);
 
   useEffect(() => {
     // if (activeTab === 1) {

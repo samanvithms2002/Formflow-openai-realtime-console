@@ -146,12 +146,6 @@ export function ConsolePage() {
     return `${pad(m)}:${pad(s)}.${pad(hs)}`;
   }, []);
 
-  /**
-   * When you click the API key
-   */
-  useEffect(() => {
-    localStorage.setItem('tmp::voice_api_key', api_Key);
-  }, []);
 
   useEffect(() => {
     items.filter((conversationItem) => {
@@ -174,6 +168,9 @@ export function ConsolePage() {
     });
   }, [items]);
 
+  /**
+   * When you click the API key
+   */
   // const resetAPIKey = useCallback(() => {
   //   const apiKey = prompt('OpenAI API Key');
   //   if (apiKey !== null) {
