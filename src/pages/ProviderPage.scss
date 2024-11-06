@@ -2,32 +2,30 @@
   font-family: 'Montserrat', monospace;
 }
 
-.container{
+.container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 3rem 5rem;
+  padding: 3rem 5rem 1rem 5rem;
 }
 
 .heading {
-  font-size:xx-large;
+  font-size: xx-large;
   font-weight: 600;
 }
 
 .content-container {
   padding: 1rem;
   width: 100%;
+  margin: 0 auto;
 }
 
-/// Summary
- .summary-container {
-  min-height: 100vh;
-  background-color: #fcfcfc;
+.summary-container {
   padding: 2rem;
 }
 
 .summary-card {
-  max-width: 800px;
+  max-width: 2000px;
   margin: 0 auto;
   background-color: white;
   border-radius: 12px;
@@ -98,10 +96,9 @@
   }
 }
 
-// Response
 .response-container {
   padding: 2rem;
-  max-width: 900px;
+  max-width: 2000px;
   margin: 0 auto;
 }
 
@@ -130,7 +127,7 @@
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid #eee;
-  
+
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transform: translateY(-1px);
@@ -140,7 +137,7 @@
 
 .question-section {
   margin-bottom: 1.25rem;
-  
+
   label {
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -149,7 +146,7 @@
     display: block;
     margin-bottom: 0.5rem;
   }
-  
+
   p {
     color: #333;
     font-size: 1rem;
@@ -162,7 +159,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-  
+
   label {
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -203,26 +200,23 @@
   .response-container {
     padding: 1rem;
   }
-  
+
   .answers-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .response-card {
     padding: 1.25rem;
   }
 }
-/// Appointment Scheduling
-/* Appointment Scheduled Tab Styles */
+
 .appointments-container {
-  min-height: 100vh;
-  background-color: #fcfcfc;
   padding: 32px;
 }
 
 .appointments-card {
-  max-width: 800px;
+  max-width: 2000px;
   margin: 0 auto;
   background-color: white;
   border-radius: 12px;
@@ -336,25 +330,25 @@
   .appointments-container {
     padding: 16px;
   }
-  
+
   .appointments-card {
     padding: 20px;
   }
-  
+
   .detail-row {
     grid-template-columns: 1fr;
   }
-  
+
   .appointment-item {
     padding: 20px;
   }
-  
+
   .appointment-item-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .appointments-title {
     font-size: 20px;
   }

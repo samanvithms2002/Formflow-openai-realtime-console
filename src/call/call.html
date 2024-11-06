@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Make Outbound Call</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 20px;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      input,
+      button {
+        padding: 10px;
+        font-size: 16px;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      #status {
+        margin-top: 20px;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Make an Outbound Call</h1>
+    <form id="callForm">
+      <label for="phoneNumber">Phone Number:</label>
+      <input
+        type="tel"
+        id="phoneNumber"
+        name="phoneNumber"
+        required
+        placeholder="+1234567890"
+        pattern="\+?[1-9]\d{1,14}"
+      />
+      <button type="submit">Make Call</button>
+    </form>
+
+    <div id="status"></div>
+
+    <script>
+      document
+        .getElementById('callForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const phoneNumber = document.getElementById('phoneNumber').value;
+          const status = document.getElementById('status');
+
+          try {
+            const response = await fetch('http://localhost:5050/make-call', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ phoneNumber }),
+            });
+
+            const data = await response.json();
+            status.textContent = `Call initiated: ${data.callSid}`;
+          } catch (error) {
+            status.textContent = `Error: ${error.message}`;
+          }
+        });
+    </script>
+  </body>
+</html>
