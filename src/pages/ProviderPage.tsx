@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useVisibility } from '../context/VisibilityContext';
 import Tabs from '../components/tabs/Tabs';
+import PatientSummaryTab from '../components/provider/PatientSummaryTab'
+import PatientResponseTab from '../components/provider/PatientResponseTab';
+import AppointmentScheduledTab from '../components/provider/AppointmentScheduledTab';
 import OpenAI from 'openai';
 import './ProviderPage.scss';
 
@@ -64,56 +67,72 @@ const ProviderPage: React.FC = () => {
         <Tabs
           activeTab={activeTab}
           onTabChange={(tabLabel) => setActiveTab(tabLabel)}
+          // tabs={[
+          //   {
+          //     label: 'Patient Summary',
+          //     // children: (
+          //     //   <>
+          //     //     {patientSummary.map((point, index) => (
+          //     //       <div key={index}>
+          //     //         {point} <br />
+          //     //       </div>
+          //     //     ))}
+          //     //   </>
+          //     // ),
+          //     children : <PatientSummaryTab/>
+          //   },
+          //   {
+          //     label: 'Patient Response',
+          //     // children: (
+          //     //   <div>
+          //     //     {patientResponse && patientResponse.length > 0 ? (
+          //     //       patientResponse
+          //     //         .filter((response) => response.question_text !== null)
+          //     //         .map((response, index) => (
+          //     //           <div key={index} className="response-item">
+          //     //             <p>
+          //     //               <strong>Question:</strong>{' '}
+          //     //               {response.question_text || 'N/A'}
+          //     //             </p>
+          //     //             <p>
+          //     //               <strong>Selected Option:</strong>{' '}
+          //     //               {response.selectedOption
+          //     //                 ? response.selectedOption.text
+          //     //                 : 'None'}
+          //     //             </p>
+          //     //             <p>
+          //     //               <strong>Not Selected Options:</strong>{' '}
+          //     //               {response.NotSelectedOption
+          //     //                 ? response.NotSelectedOption.join(', ')
+          //     //                 : 'None'}
+          //     //             </p>
+          //     //             <hr />
+          //     //           </div>
+          //     //         ))
+          //     //     ) : (
+          //     //       <div>No patient responses found.</div>
+          //     //     )}
+          //     //   </div>
+          //     // ),
+          //     children: <PatientResponseTab/>
+          //   },
+          //   {
+          //     label: 'Appointment Scheduled',
+          //     children: <div>Appointment Scheduled Content</div>,
+          //   },
+          // ]}
           tabs={[
             {
               label: 'Patient Summary',
-              children: (
-                <>
-                  {patientSummary.map((point, index) => (
-                    <div key={index}>
-                      {point} <br />
-                    </div>
-                  ))}
-                </>
-              ),
+              children: <PatientSummaryTab summaryPoints={patientSummary} />
             },
             {
               label: 'Patient Response',
-              children: (
-                <div>
-                  {patientResponse && patientResponse.length > 0 ? (
-                    patientResponse
-                      .filter((response) => response.question_text !== null)
-                      .map((response, index) => (
-                        <div key={index} className="response-item">
-                          <p>
-                            <strong>Question:</strong>{' '}
-                            {response.question_text || 'N/A'}
-                          </p>
-                          <p>
-                            <strong>Selected Option:</strong>{' '}
-                            {response.selectedOption
-                              ? response.selectedOption.text
-                              : 'None'}
-                          </p>
-                          <p>
-                            <strong>Not Selected Options:</strong>{' '}
-                            {response.NotSelectedOption
-                              ? response.NotSelectedOption.join(', ')
-                              : 'None'}
-                          </p>
-                          <hr />
-                        </div>
-                      ))
-                  ) : (
-                    <div>No patient responses found.</div>
-                  )}
-                </div>
-              ),
+              children: <PatientResponseTab responses={patientResponse} />
             },
             {
               label: 'Appointment Scheduled',
-              children: <div>Appointment Scheduled Content</div>,
+              children: <AppointmentScheduledTab/>,
             },
           ]}
         />
