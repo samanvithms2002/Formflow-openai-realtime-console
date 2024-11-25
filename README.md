@@ -350,23 +350,3 @@ trackOffset.trackId; // "my-track"
 trackOffset.offset; // sample number
 trackOffset.currentTime; // time in track
 ```
-
-# Acknowledgements and contact
-
-Thanks for checking out the Realtime Console. We hope you have fun with the Realtime API.
-Special thanks to the whole Realtime API team for making this possible. Please feel free
-to reach out, ask questions, or give feedback by creating an issue on the repository.
-You can also reach out and let us know what you think directly!
-
-- OpenAI Developers / [@OpenAIDevs](https://x.com/OpenAIDevs)
-- Jordan Sitkin / API / [@dustmason](https://x.com/dustmason)
-- Mark Hudnall / API / [@landakram](https://x.com/landakram)
-- Peter Bakkum / API / [@pbbakkum](https://x.com/pbbakkum)
-- Atty Eleti / API / [@athyuttamre](https://x.com/athyuttamre)
-- Jason Clark / API / [@onebitToo](https://x.com/onebitToo)
-- Karolis Kosas / Design / [@karoliskosas](https://x.com/karoliskosas)
-- Keith Horwood / API + DX / [@keithwhor](https://x.com/keithwhor)
-- Romain Huet / DX / [@romainhuet](https://x.com/romainhuet)
-- Katia Gil Guzman / DX / [@kagigz](https://x.com/kagigz)
-- Ilan Bigio / DX / [@ilanbigio](https://x.com/ilanbigio)
-- Kevin Whinnery / DX / [@kevinwhinnery](https://x.com/kevinwhinnery)
