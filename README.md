@@ -2,7 +2,15 @@
 
 FormFlow AI is a dynamic patient intake solution, leveraging real-time audio streaming and conversational AI to automate patient interviews, fill intake forms interactively, generate comprehensive doctor summaries, and facilitate appointment scheduling and follow-up coordination through intelligent voice interactions through web and phone call..
 
-<img src="/readme/realtime-console-demo.png" width="800" />
+![image](https://github.com/user-attachments/assets/22823f55-fa71-4912-b2c4-2b5316960da3)
+
+![image](https://github.com/user-attachments/assets/54b4ac08-ee25-4f24-b48b-ad994fff547f)
+
+# Provider Portal
+![image](https://github.com/user-attachments/assets/cf832330-3fe3-4f18-9561-b4f6e44cde2f)
+
+
+
 
 # Starting the console
 
@@ -45,14 +53,6 @@ To start a session you'll need to **connect**. This will require microphone acce
 You can then choose between **manual** (Push-to-talk) and **vad** (Voice Activity Detection)
 conversation modes, and switch between them at any time.
 
-There are two functions enabled;
-
-- `get_weather`: Ask for the weather anywhere and the model will do its best to pinpoint the
-  location, show it on a map, and get the weather for that location. Note that it doesn't
-  have location access, and coordinates are "guessed" from the model's training data so
-  accuracy might not be perfect.
-- `set_memory`: You can ask the model to remember information for you, and it will store it in
-  a JSON blob on the left.
 
 You can freely interrupt the model at any time in push-to-talk or VAD mode.
 
