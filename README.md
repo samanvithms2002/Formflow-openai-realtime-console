@@ -29,20 +29,6 @@ $ npm start
 
 It should be available via `localhost:3000`.
 
-# Table of contents
-
-1. [Using the console](#using-the-console)
-   1. [Using a relay server](#using-a-relay-server)
-1. [Realtime API reference client](#realtime-api-reference-client)
-   1. [Sending streaming audio](#sending-streaming-audio)
-   1. [Adding and using tools](#adding-and-using-tools)
-   1. [Interrupting the model](#interrupting-the-model)
-   1. [Reference client events](#reference-client-events)
-1. [Wavtools](#wavtools)
-   1. [WavRecorder quickstart](#wavrecorder-quickstart)
-   1. [WavStreamPlayer quickstart](#wavstreamplayer-quickstart)
-1. [Acknowledgements and contact](#acknowledgements-and-contact)
-
 # Using the console
 
 The console requires an OpenAI API key (**user key** or **project key**) that has access to the
@@ -55,86 +41,6 @@ conversation modes, and switch between them at any time.
 
 
 You can freely interrupt the model at any time in push-to-talk or VAD mode.
-
-## Using a relay server
-
-If you would like to build a more robust implementation and play around with the reference
-client using your own server, we have included a Node.js [Relay Server](/relay-server/index.js).
-
-```shell
-$ npm run relay
-```
-
-It will start automatically on `localhost:8081`.
-
-**You will need to create a `.env` file** with the following configuration:
-
-```conf
-OPENAI_API_KEY=YOUR_API_KEY
-REACT_APP_LOCAL_RELAY_SERVER_URL=http://localhost:8081
-```
-
-You will need to restart both your React app and relay server for the `.env.` changes
-to take effect. The local server URL is loaded via [`ConsolePage.tsx`](/src/pages/ConsolePage.tsx).
-To stop using the relay server at any time, simply delete the environment
-variable or set it to empty string.
-
-```javascript
-/**
- * Running a local relay server will allow you to hide your API key
- * and run custom logic on the server
- *
- * Set the local relay server address to:
- * REACT_APP_LOCAL_RELAY_SERVER_URL=http://localhost:8081
- *
- * This will also require you to set OPENAI_API_KEY= in a `.env` file
- * You can run it with `npm run relay`, in parallel with `npm start`
- */
-const LOCAL_RELAY_SERVER_URL: string =
-  process.env.REACT_APP_LOCAL_RELAY_SERVER_URL || '';
-```
-
-This server is **only a simple message relay**, but it can be extended to:
-
-- Hide API credentials if you would like to ship an app to play with online
-- Handle certain calls you would like to keep secret (e.g. `instructions`) on
-  the server directly
-- Restrict what types of events the client can receive and send
-
-You will have to implement these features yourself.
-
-# Realtime API reference client
-
-The latest reference client and documentation are available on GitHub at
-[openai/openai-realtime-api-beta](https://github.com/openai/openai-realtime-api-beta).
-
-You can use this client yourself in any React (front-end) or Node.js project.
-For full documentation, refer to the GitHub repository, but you can use the
-guide here as a primer to get started.
-
-```javascript
-import { RealtimeClient } from '/src/lib/realtime-api-beta/index.js';
-
-const client = new RealtimeClient({ apiKey: process.env.OPENAI_API_KEY });
-
-// Can set parameters ahead of connecting
-client.updateSession({ instructions: 'You are a great, upbeat friend.' });
-client.updateSession({ voice: 'alloy' });
-client.updateSession({ turn_detection: 'server_vad' });
-client.updateSession({ input_audio_transcription: { model: 'whisper-1' } });
-
-// Set up event handling
-client.on('conversation.updated', ({ item, delta }) => {
-  const items = client.conversation.getItems(); // can use this to render all items
-  /* includes all changes to conversations, delta may be populated */
-});
-
-// Connect to Realtime API
-await client.connect();
-
-// Send an item and triggers a generation
-client.sendUserMessageContent([{ type: 'text', text: `How are you?` }]);
-```
 
 ## Sending streaming audio
 
